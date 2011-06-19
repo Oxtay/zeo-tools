@@ -48,8 +48,8 @@ class ZeoLinkRecorder(object):
 	def start(self, filename=None):
 		"""
 		Starts recording incomming events to a file.
-		If no filename is given, a new timestamped fileis created
-		in the directorythat was specified to the constructor.
+		If no filename is given, a new timestamped file is created
+		in the directory that was specified to the constructor.
 		"""
 		if filename is None:
 			datestring = time.strftime("%Y-%m-%dT%H:%M:%S")
