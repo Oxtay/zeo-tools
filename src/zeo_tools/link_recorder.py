@@ -19,6 +19,8 @@ class ZeoLinkRecorder(object):
 	Records a Zeo Raw Data Link stream (decoded by a BaseLink.BaseLink instance) to an HDF5 file.
 	The resulting file can be replayed with the ZeoLinkReplay class or used for offline analysis.
 	To start recording when the user undocks the headband, use the HeadbandDockController class.
+	At maximum compression levels, one hour of data takes about 2MB of disk space.
+	
 	Basic usage:
 	>>> recorder = ZeoLinkRecorder()
 	>>> recorder.start("destination.hdf5")
@@ -128,7 +130,7 @@ class ZeoLinkReplay(object):
 		else:
 			query = []
 			if start is not None:
-				query.append('(timestamp > %d)' % start)
+				query.append('(timestamp >= %d)' % start)
 				record_start = start
 			if stop is not None:
 				query.append('(timestamp < %d)' % stop)
@@ -160,7 +162,7 @@ if __name__ == "__main__":
 	replay = ZeoLinkReplay(fname)
 	replay.addCallback(default_print_recorder().update)
 #	replay.batch()
-	replay.run(speed=2, start=1308511542)
+	replay.run(speed='max')
 	
 	del replay
 	
