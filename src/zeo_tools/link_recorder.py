@@ -59,9 +59,9 @@ class ZeoLinkRecorder(object):
 		group = h5file.createGroup("/", "zeolinkdata", "Zeo Raw Data Link Recording")
 		filters = Filters(complevel=self.compression_level, fletcher32=self.checksum)
 		self.replay_data = h5file.createVLArray(group, 'data', VLStringAtom(), "Link Replay Data",
-												expectedsizeinMB=(self.expected_hours*3600*300)/(1024.0**2), filters=filters)
+												expectedsizeinMB=(self.expected_hours*3600*280)/(1024.0**2), filters=filters)
 		self.replay_metadata = h5file.createTable(group, 'metadata', TimestampedZeoDesc, "Link Replay Metadata",
-												expectedrows=self.expected_hours*3600, filters=filters)
+												expectedrows=self.expected_hours*3600*5, filters=filters)
 		self.h5file = h5file
 		print "Recording to %s started." % filename
 	
