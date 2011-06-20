@@ -56,13 +56,13 @@ class ZeoLinkRecorder(object):
 			datestring = time.strftime("%Y-%m-%dT%H:%M:%S")
 			filename = os.path.abspath(os.path.join(self.base_dir, "zeodata_%s.h5" % datestring))
 		
-		h5file = tables.openFile(filename, mode = "w")
-		group = h5file.createGroup("/", "zeolinkdata", "Zeo Raw Data Link Recording")
 		filters = Filters(complevel=self.compression_level, fletcher32=self.checksum)
+		h5file = tables.openFile(filename, mode = "w", filters=filters)
+		group = h5file.createGroup("/", "zeolinkdata", "Zeo Raw Data Link Recording")
 		self.replay_data = h5file.createVLArray(group, 'data', VLStringAtom(), "Link Replay Data",
-												expectedsizeinMB=(self.expected_hours*3600*300)/(1024.0**2), filters=filters)
+									expectedsizeinMB=(self.expected_hours*3600*300)/(1024.0**2))
 		self.replay_metadata = h5file.createTable(group, 'metadata', TimestampedZeoDesc, "Link Replay Metadata",
-												expectedrows=self.expected_hours*3600*5, filters=filters)
+									expectedrows=self.expected_hours*3600*5)
 		self.h5file = h5file
 		print "Recording to %s started." % filename
 	
@@ -125,6 +125,7 @@ class ZeoLinkReplay(object):
 		start, stop -- optional timestamps defining the interval to replay.
 		"""
 		record_start = self.replay_metadata[0]['timestamp']
+		record_end = self.replay_metadata[-1]['timestamp']
 
 		if start is None and stop is None:
 			event_iterator = itertools.izip(self.replay_data, self.replay_metadata)
@@ -135,13 +136,18 @@ class ZeoLinkReplay(object):
 				record_start = start
 			if stop is not None:
 				query.append('(timestamp < %d)' % stop)
+				record_end = stop
 			metadata_rows = self.replay_metadata.where('&'.join(query))
 			event_iterator = ((self.replay_data[row.nrow], row) for row in metadata_rows)
 		
 		if speed in ("max", float('inf')):
 			# Push the data to the callbacks as fast as it can be read
+			i = 0
 			for event_data, event_metadata in event_iterator:
 				self._replay(event_data, event_metadata)
+				if i % 1000 == 0:
+					print int(100 * (event_metadata['timestamp'] - record_start) / (record_end - record_start)), "%"
+				i += 1
 		else:
 			# Replay the event timeline
 			replay_start = time.time()
@@ -160,11 +166,15 @@ class ZeoLinkReplay(object):
 if __name__ == "__main__":
 	fname = "zeodata_2011-06-19T23:35:24.h5"
 	replay = ZeoLinkReplay(fname)
+	copy = ZeoLinkRecorder()
+	copy.start()
 	wav_converter = WaveformToWAV()
 	replay.addCallback(wav_converter.update)
+	replay.addCallback(copy.update)
 	print "replaying..."
 	replay.run(speed='max')
 	print "done."
+	copy.stop()
 	wav_converter.write("waveform2.wav", speedup=200)
 	del replay
 	
