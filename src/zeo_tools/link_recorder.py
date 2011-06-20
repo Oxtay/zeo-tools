@@ -8,7 +8,6 @@ from tables import IsDescription, UInt8Col, Float32Col, UInt32Col, Filters, VLSt
 import os.path
 import time
 import itertools
-from zeo_tools.converters.audio import WaveformToWAV
 
 class TimestampedZeoDesc(IsDescription):
 	timestamp = UInt32Col()
@@ -164,16 +163,27 @@ class ZeoLinkReplay(object):
 			c(event_metadata['timestamp'], event_metadata['timestamp_subsec'], event_metadata['version'], event_data)
 		
 if __name__ == "__main__":
+	from zeo_tools.converters.audio import WaveformToWAV
+	
+	# Prepare to replay this file:
 	fname = "zeodata_2011-06-19T23:35:24.h5"
 	replay = ZeoLinkReplay(fname)
+	
+	# Make another copy using the LinkRecorded
 	copy = ZeoLinkRecorder()
+	replay.addCallback(copy.update)
 	copy.start()
+	
+	# Also extract waveform data to a WAV file
 	wav_converter = WaveformToWAV()
 	replay.addCallback(wav_converter.update)
-	replay.addCallback(copy.update)
+	
+	# Go!
 	print "replaying..."
 	replay.run(speed='max')
 	print "done."
+	
+	# Cleanup
 	copy.stop()
 	wav_converter.write("waveform2.wav", speedup=200)
 	del replay
