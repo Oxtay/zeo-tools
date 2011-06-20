@@ -24,7 +24,8 @@ class WaveformToWAV(object):
 	def write(self, dest_filename, speedup=1):
 		"""
 		Writes the recorded data to the destination file.
-		Speedup controls the framerate; a speedup of 200 will make the timeseries audible.
+		speedup -- controls the framerate (128Hz for speedup=1).
+		           A speedup of about 200 makes the timeseries audible.
 		"""
 		data = np.array(self.data, dtype=np.int16).flatten().data
 		wf = wave.open(dest_filename, 'wb')

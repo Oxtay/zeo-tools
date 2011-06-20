@@ -158,12 +158,10 @@ class ZeoLinkReplay(object):
 			c(event_metadata['timestamp'], event_metadata['timestamp_subsec'], event_metadata['version'], event_data)
 		
 if __name__ == "__main__":
-	from zeo_tools.debug import default_print_recorder
 	fname = "zeodata_2011-06-19T23:35:24.h5"
 	replay = ZeoLinkReplay(fname)
 	wav_converter = WaveformToWAV()
 	replay.addCallback(wav_converter.update)
-#	replay.batch()
 	print "replaying..."
 	replay.run(speed='max')
 	print "done."
