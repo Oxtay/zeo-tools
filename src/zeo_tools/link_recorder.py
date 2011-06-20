@@ -8,6 +8,7 @@ from tables import IsDescription, UInt8Col, Float32Col, UInt32Col, Filters, VLSt
 import os.path
 import time
 import itertools
+from zeo_tools.converters.audio import WaveformToWAV
 
 class TimestampedZeoDesc(IsDescription):
 	timestamp = UInt32Col()
@@ -16,10 +17,10 @@ class TimestampedZeoDesc(IsDescription):
 
 class ZeoLinkRecorder(object):
 	"""
-	Records a Zeo Raw Data Link stream (decoded by a BaseLink.BaseLink instance) to an HDF5 file.
+	Records a Zeo Raw Data Link stream (decoded by a ZeoRawData.BaseLink instance) to an HDF5 file.
 	The resulting file can be replayed with the ZeoLinkReplay class or used for offline analysis.
 	To start recording when the user undocks the headband, use the HeadbandDockController class.
-	At maximum compression levels, one hour of data takes about 2MB of disk space.
+	At maximum compression levels, one hour of data takes about 1.5MB of disk space.
 	
 	Basic usage:
 	>>> recorder = ZeoLinkRecorder()
@@ -59,7 +60,7 @@ class ZeoLinkRecorder(object):
 		group = h5file.createGroup("/", "zeolinkdata", "Zeo Raw Data Link Recording")
 		filters = Filters(complevel=self.compression_level, fletcher32=self.checksum)
 		self.replay_data = h5file.createVLArray(group, 'data', VLStringAtom(), "Link Replay Data",
-												expectedsizeinMB=(self.expected_hours*3600*280)/(1024.0**2), filters=filters)
+												expectedsizeinMB=(self.expected_hours*3600*300)/(1024.0**2), filters=filters)
 		self.replay_metadata = h5file.createTable(group, 'metadata', TimestampedZeoDesc, "Link Replay Metadata",
 												expectedrows=self.expected_hours*3600*5, filters=filters)
 		self.h5file = h5file
@@ -158,11 +159,14 @@ class ZeoLinkReplay(object):
 		
 if __name__ == "__main__":
 	from zeo_tools.debug import default_print_recorder
-	fname = "zeodata_2011-06-19T19:26:07.h5"
+	fname = "zeodata_2011-06-19T23:35:24.h5"
 	replay = ZeoLinkReplay(fname)
-	replay.addCallback(default_print_recorder().update)
+	wav_converter = WaveformToWAV()
+	replay.addCallback(wav_converter.update)
 #	replay.batch()
+	print "replaying..."
 	replay.run(speed='max')
-	
+	print "done."
+	wav_converter.write("waveform2.wav", speedup=200)
 	del replay
 	
