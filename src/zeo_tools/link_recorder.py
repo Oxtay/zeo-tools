@@ -169,7 +169,7 @@ if __name__ == "__main__":
 	fname = "zeodata_2011-06-19T23:35:24.h5"
 	replay = ZeoLinkReplay(fname)
 	
-	# Make another copy using the LinkRecorded
+	# Make another copy using the ZeoLinkRecorder again
 	copy = ZeoLinkRecorder()
 	replay.addCallback(copy.update)
 	copy.start()
