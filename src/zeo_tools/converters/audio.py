@@ -38,3 +38,25 @@ class WaveformToWAV(object):
 			wf.close()
 		print "WAV file written to %s" % dest_filename
 		self.data = []
+
+def record_to_wav(record_filename, wav_filename, speedup=1, **replay_kwargs):
+	from zeo_tools.link_recorder import ZeoLinkReplay
+	# Prepare to replay this file:
+	replay = ZeoLinkReplay(record_filename)
+	
+	# Extract waveform data to a WAV file
+	wav_converter = WaveformToWAV()
+	replay.addCallback(wav_converter.update)
+	
+	# Go!
+	print "replaying..."
+	replay.run(speed="max", **replay_kwargs)
+	print "done."
+	
+	# Cleanup
+	wav_converter.write(wav_filename, speedup=speedup)
+	del replay
+	
+
+if __name__ == "__main__":
+	record_to_wav("zeodata_2011-06-19T23:35:24.h5", "waveform.wav")
